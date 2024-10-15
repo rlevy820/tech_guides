@@ -6,8 +6,13 @@
 python3.9 -m venv venv
 ```
 
-## Activating your Virtual Environment
+## Activating  Virtual Environment
 ### Before using your virtual environment on your project, you need to activate it
 ```bash
 source venv/bin/activate
+```
+
+## Deactivate Virtual Environment
+```bash
+deactivate
 ```
