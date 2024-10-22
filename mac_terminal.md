@@ -1,6 +1,8 @@
 # Mac Terminal Cheat Sheet
 
 ## Basic Navigation
+### Autofill
+`TAB` will give you autofill options in the terminal
 
 ### Show current directory
 ```bash
