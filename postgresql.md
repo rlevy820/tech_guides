@@ -22,15 +22,15 @@ psql -U postgres
 \dt
 ```
 ## Show table structure/schema
+```bash
 \d tablename
-```bash
 ```
-## Help
+## SQL Help
 ```bash
-# sql help
 \h
-
-# psql help
+```
+## PSQL help
+```bash
 \?
 ```
 ## Exit postgresql
