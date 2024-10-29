@@ -1,5 +1,9 @@
 # Postgresql Cheet Sheet
-## Start Postgresql in terminal
-```
+## Start postgresql in terminal
+```bash
 psql postgres
+```
+## Exit postgresql
+```bash
+\q
 ```
