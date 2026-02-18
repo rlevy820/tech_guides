@@ -11,6 +11,12 @@ git add .
 git commit -m 'commit name'
 ```
 
+### Notes on Commit Messages
+- Start with a verb
+- Be specific and concise
+- Sometimes explain _why_, not just _what_
+- Sometimes refer to certain Github "issues" (i.e. fix #35)
+
 ## Connect to GitHub repo
 ```bash
 git remote add origin git@github.com:<username>/<repository>.git
