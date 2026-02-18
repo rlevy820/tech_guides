@@ -16,6 +16,11 @@ git commit -m 'commit name'
 git remote add origin git@github.com:<username>/<repository>.git
 ```
 
+## Clone and existing GitHub repo
+```bash
+git clone git@github.com:<username>/<repository>.git
+```
+
 ## Check SSH Connection
 ### Start the SSH agent in the background
 ```bash
