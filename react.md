@@ -79,11 +79,11 @@ Inside that return, we place the elements we need. The input field is where the 
 
 The input element is where the user types a task. Its `value` attribute is tied to the `newTask` state, meaning whatever `newTask` is, that’s what you see inside the input. When the user types, the `onChange` event fires. This event takes what the user typed (`e.target.value`) and updates `newTask`, ensuring the input always matches what’s stored in that state.
 
-### Button
+#### Button
 
 The button is a clickable element that triggers an action. When the user clicks it, it runs the function tied to its `onClick`. In this case, we take the current `newTask`, add it to the tasks array, and update the state with the new list.
 
-### List
+#### List
 
 The list is rendered from the `tasks` state. Each time tasks changes, React re-renders the list. We use a `map` function to go through each task and display it as a list item. Each item has a unique `key` (here we use the index). So, when you add a task, the list updates immediately, reflecting the current tasks state.
 
