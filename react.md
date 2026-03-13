@@ -373,14 +373,11 @@ At this point, you may ask "if the database stores the data, why doesn’t the R
 
 There are several reasons why modern web applications use a backend server between the frontend and the database.
 
-- Security
-A database requires credentials (username and password). If the frontend connected directly, those credentials would have to live in the browser code, which anyone could inspect. A backend keeps those credentials private on the server.
+- Security: a database requires credentials (username and password). If the frontend connected directly, those credentials would have to live in the browser code, which anyone could inspect. A backend keeps those credentials private on the server.
 
-- Abstraction
-The frontend should not care how data is stored. Today you might use PostgreSQL. Later you might move to MongoDB, Redis, or a different schema. If the frontend talks only to the backend API, the backend can change without breaking the frontend.
+- Abstraction: the frontend should not care how data is stored. Today you might use PostgreSQL. Later you might move to MongoDB, Redis, or a different schema. If the frontend talks only to the backend API, the backend can change without breaking the frontend.
 
-- Historical Architecture
-Early web apps often mixed database queries directly into page code. This led to widespread vulnerabilities such as SQL injection, where attackers could manipulate queries and access or destroy data. Modern architectures separate the frontend, backend, and database specifically to prevent those problems.
+- Historical Architecture: early web apps often mixed database queries directly into page code. This led to widespread vulnerabilities such as SQL injection, where attackers could manipulate queries and access or destroy data. Modern architectures separate the frontend, backend, and database specifically to prevent those problems.
 
 This pattern — frontend → backend → database — became the standard architecture for web applications because it separates concerns:
 
@@ -388,7 +385,7 @@ This pattern — frontend → backend → database — became the standard archi
 - backend handles logic and APIs
 - database handles storage
 
--
+---
 
 Right now, the main code in our backend is `index.ts`. As the project grows, we don't want everything to live in this file.
 
