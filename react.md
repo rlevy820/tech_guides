@@ -206,7 +206,7 @@ Now we can begin working in the backend folder.
 1. Enter into the backend folder with `cd backend`
 2. Initialize a new default Node project using `npm init -y`
 3. Install Express and pg by running `npm install express pg`
-4. Install TypeScript development dependencies `npm install -D typescript tsx @types/node @types/express`
+4. Install TypeScript development dependencies `npm install -D typescript tsx @types/node @types/express @types/pg`
 5. Create the TypeScript config file with `npx tsc --init`
 
 You should see:
@@ -363,13 +363,25 @@ When you install PostgreSQL on your machine, it runs a database server locally. 
 3. Create the database for our project with `CREATE DATABASE tasks_db;`
 4. Set a username and password that our backend server will use when connecting to the database with `CREATE USER tasks_user WITH PASSWORD 'mypassword';` (creating a new user-named similarly to the database name-for each application you create is good practice).
 5. Grant that user access to the database with `GRANT ALL PRIVILEGES ON DATABASE tasks_db TO tasks_user;`
-6. Exit the `psql` terminal interface with `\q`
+6. Connect to the specific database and grant schema permissions (read and write privileges)
+
+```
+\c tasks_db;
+GRANT ALL PRIVILEGES ON SCHEMA public TO tasks_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO tasks_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO tasks_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO tasks_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO tasks_user;
+```
+7. Exit the `psql` terminal interface with `\q`
+
+### Connecting the database to the backend 
 
 Now that the database exists, we need to connect our backend server to it. The backend will be responsible for sending queries to PostgreSQL.
 
 ---
 
-#### Why do we need a backend if the database is storing the data
+***Why do we need a backend if the database is storing the data***
 
 At this point, you may ask "if the database stores the data, why doesn’t the React frontend just query the database directly?""
 
@@ -454,8 +466,8 @@ These values match the database and user we created earlier in `psql`.
 Change `index.ts` to the following:
 
 ```
-import app from "./app";
-import pool from "./db";
+import app from "./app.js";
+import pool from "./db.js";
 
 const PORT = 3001;
 
@@ -480,3 +492,130 @@ startServer();
 We write a function `startServer()` using `async`. We use `async` to manage operations that take an unpredictable amount of time without interfering with the main program thread and freezing the application's user interface.
 
 `await pool.query("SELECT 1");` tests that we have connected to the database successfully by running the sql command "SELECT 1". After confirming the connection, we start the server with `app.listen(PORT)`. We wrap this code in a `try/catch` statement, so that if it fails, we return the error and the program doesn't crash. Finally, we call the `startServer()` function.
+
+Now that the backend can successfully connect to PostgreSQL, the next step is to create a table where our application data will live.
+
+A PostgreSQL database can contain many tables. Each table stores a specific type of data. In our case we need a table that stores the tasks from our to-do list.
+
+---
+***Why we define tables in code instead of only in psql***
+
+You could open `psql` and manually run a `CREATE TABLE` command. That works for quick experiments, but it creates problems for real projects.
+
+If someone else clones the project, they would need to know to run that same command for it work.
+---
+
+In `db.ts`, add the following function:
+
+```
+export async function initializeDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id SERIAL PRIMARY KEY,
+      description TEXT NOT NULL,
+      completed BOOLEAN DEFAULT false
+    );
+  `);
+}
+```
+
+`pool.query` sends an SQL command to our database. SQL is a programming language designed to manage and interact with data stored in relational database systems (row and column-like tables). We create a table named `tasks` with the line `IF NOT EXISTS` to not create it more than once when this function is run. The table has three columns:
+
+- `id` which assigns an identification number to each row item (each task, in this case). `SERIAL` ensures the id will get automatically incremented by PostgreSQL and `PRIMARY KEY` tells the system that if other tables want to reference a specific row, this column (`id`) is the unique identifier they should point to. We choose the `id` as the primary key because we know it will be unique. If we chose `description`, and two tasks have the same `description`, that would get confusing.
+- `description` which stores the task text. `TEXT` tells the database that the data in this column will be text (text can include numbers). `NOT NULL` means every row must contain a `description` value.
+- `completed` stores a `BOOLEAN` (thats a true/false data type) indicating if the task is completed. `DEFAULT false` automatically sets new tasks `completed` value to `false`.
+
+We'll want this function to be called when the backend server starts. Update `index.ts`:
+
+```
+import app from "./app.js";
+import pool, { initializeDatabase } from "./db.js";
+
+const PORT = 3001;
+
+async function startServer() {
+  try {
+    await pool.query("SELECT 1");
+    await initializeDatabase();
+
+    console.log("Connected to PostgreSQL");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to connect to database:", error);
+  }
+}
+
+startServer();
+```
+
+### Reading from and writing to the database
+
+Our backend server can successfully connect to PostgreSQL and we've ensured an accurate `tasks` table. Now we want the backend to interact with the tasks table.
+
+Before, we were using routes to simply print "Backend server is running". Now, we will create routes that can run SQL queries on the database and send the results back to the frontend.
+
+Similarly to how our backend used a route to communicate with the frontend, we use routes for our backend to communicate with the database.
+
+#### Getting all tasks from the database
+
+The first thing we want from our app is to load all the current tasks we have. The way we'll do this is by getting all the rows from the `tasks` table.
+
+Update `app.ts` to the following:
+
+```
+import express from "express";
+import pool from "./db.js";
+
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Backend server is running");
+});
+
+app.get("/tasks", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM tasks ORDER BY id ASC");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Failed to fetch tasks:", error);
+    res.status(500).send("Failed to fetch tasks");
+  }
+});
+
+export default app;
+```
+
+We `import pool from "./db.js";` so this file can connect to the database.
+
+Next, we add a new route with `app.get`, stating that when the backend receives a GET request at the url ending with `/tasks`, run the following.
+
+We make the function `async` because database queries take time to complete. Marking the function `async` allows us to use `await`, which pauses that function until the database returns the result from the command `pool.query("SELECT * FROM tasks ORDER BY id ASC")`, while the rest of the application continues running. `ORDER BY id ASC` sorts the results by `id` in ascending order, so older tasks appear first.
+
+The result of `pool.query("SELECT * FROM tasks ORDER BY id ASC")` is an object containing information about the query. The actual rows returned from the database are in `result.rows`. We convert this array of rows into JSON with `res.json(result.rows);`. JSON is a standard data format used in JavaScript applications. It transforms the data from looking something like 
+
+| id | description     | completed |
+| -- | --------------- | --------- |
+| 1  | Buy milk        | false     |
+| 2  | Finish homework | true      |
+
+to something like
+
+```
+[
+  { id: 1, description: "Buy milk", completed: false },
+  { id: 2, description: "Finish homework", completed: true }
+]
+```
+
+We again wrap the route in a `try/catch` block so that if the query fails, we can handle the error cleanly. In the case of failure, we set the response status to 500 and send an error message to the client with `res.status(500).send("Failed to fetch tasks");`.
+
+`500` is just one type of code we can use to communicate what happened on the backend. When a server responds to a request, it usually includes a numeric status code that tells the client what happened. Browsers, APIs, and developer tools rely on these codes to understand whether a request succeeded or failed.
+
+Some other HTTP status codes are:
+
+- 200: success (the request worked as planned)
+- 404: not found (the connection was successful but what you're looking for does not exist)
+- 500: internal service error (something went wrong on the server)
