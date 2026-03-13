@@ -1,6 +1,10 @@
 # React
 
-React keeps a "pretend version" of your webpage in memory. When something changes—like a number or text—it updates that pretend version first. Then React compares that pretend version to what’s actually on your screen. If it notices a difference, it only changes that exact part on your real webpage. This way, it doesn’t have to rebuild the whole page—just the part that changed.
+React is a modern library for creating the frontend of websites.
+
+## How it works
+
+React is unique because it keeps a "pretend version" of your webpage in memory. When something changes, like a number or text, it updates that pretend version first. Then React compares that pretend version to what’s actually on your screen. If it notices a difference, it only changes that exact part on your real webpage. This way, it doesn’t have to rebuild the whole page—just the part that changed.
 
 If you want to build with React, you’ll typically start by defining components. A component is just a piece of your interface, like a button or a form. React lets you break the UI down into these parts and then combine them. Each component reacts to changes in data and updates the interface.
 
@@ -10,7 +14,7 @@ We’ll build a basic to-do list where you can add tasks.
 
 ## Setup
 
-We will use Vite to help set up the project. Vite handles the build and development environment—making it fast and efficient. React itself is what you write inside the src/ folder—your components, state, and UI logic. In short: Vite is the tool scaffolding your project; React is the library you use to build the UI inside that structure.
+We will use Vite to help set up the project. Vite handles the build and development environment—making it fast and efficient. React itself is what you write inside the `src/` folder—your components, state, and UI logic. In short: Vite is the tool scaffolding your project; React is the library you use to build the UI inside that structure.
 
 1. Open the terminal and run `npm create vite@latest my-app -- --template react`
 2. Navigate into the project folder with `cd my-app` and run `npm install` to ensure dependencies are ready
@@ -169,11 +173,11 @@ Now, let’s modify how we display each task. We’ll check the `completed` prop
 
 This code is added to each item. The text of the button is `"Undo"` if `task.completed` is `true` and `"Complete"` if `false`. When you click the button, it maps through all the tasks (`t` is the task state and `i` is the index) and runs the following expression `i === index ? { ...t, completed: !t.completed } : t`: if `i === index` meaning if we're mapping over the current item where the button was clicked next to, set the `updatedTasks` variable to the object `{ ...t, completed: !t.completed }` (`...t` takes all the parts of the object (in this case it's only the description, so we could have also just used `{ description: t, completed: !t.completed }`)), but `...t` is good practice if you have more object features. So we take all of what `t` currently is, and change `completed` equal to `!t.completed` the opposite of what the completed value is currently. If `i === index` is false, just set it to `t` (the current value unmodified). Once we've set `updatedTasks` correctly, we call `setTasks` to change the state of the task.
 
-## Storing Tasks with PostgreSQL
+## Storing Tasks with a backend and database
 
 At this point, we are storing tasks in-memory in React, but if we refresh the page, our tasks disappear. We'll use a PostgreSQL database and a simple Express (using Node.js) backend to handle storing and retrieving tasks. Then we’ll connect our frontend to that backend so tasks stay even after a page reload.
 
-### Setting up the backend server
+### Setting up the backend server (Express with Node.js)
 
 We’ll install Express, connect to PostgreSQL using a library like `pg`, and create routes to add, fetch, and delete tasks. Once that’s done, we’ll connect it to the React frontend.
 
@@ -210,10 +214,270 @@ You should see:
 ```
 backend
 ├── node_modules/
-└── package-lock.json
-└── package.json
+├── package-lock.json
+├── package.json
+└── tsconfig.json
 ```
 
-The `package.json` file is where all your project’s metadata and dependencies live—so it tracks what libraries you installed and other project info. The `package-lock.json` locks the exact versions of those packages so everyone working on the project uses the same versions. And the `node_modules` folder is where all the installed packages sit. Now that we have those, we can create the server file and set up our first route.
+The `package.json` file is where all your project’s metadata and dependencies live—so it tracks what libraries you installed and other project info. 
 
-Create a file in the `backend/` folder called `index.js`
+Since we're using TypeScript, we'll need to change the following from `package.json`:
+
+Change:
+
+```
+"scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+```
+
+to
+
+```
+"scripts": {
+  "dev": "tsx src/index.ts",
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+```
+
+and add `"type": "module"`, so the final file should look like:
+
+```
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+`tsconfig.json` is a configuration file for a TypeScript file. Edit the file in the following ways:
+
+1. Uncomment `"rootDir": "./src"` so TypeScript knows the source code lives in the `src/` folder.
+2. Uncomment `"types": ["node"]` and `"lib": ["esnext"]`
+
+Note: when you uncomment `"types": ["node"]` you will need to delete the other `
+`"types": []` line
+
+The `package-lock.json` locks the exact versions of those packages so everyone working on the project uses the same versions. And the `node_modules` folder is where all the installed packages sit. Now that we have those, we can create the server file and set up our first route.
+
+Just like in our `/frontend` folder setup, the main code for the backend will go in a `src` folder. In that folder, we'll make an `index.ts` file which will be the entry point for the backend server (just like how `main.jsx` is the entry point for the React frontend).
+
+1. Ensure you're in the backend folder with `cd my-full-stack-app/backend`
+2. Create the folder with `mkdir src`
+3. Create the `index.ts` file inside the `src` folder
+
+You should see:
+
+```
+backend
+├── node_modules/
+├── package-lock.json
+├── package.json
+├── tsconfig.json
+└── src
+    └── index.ts
+```
+
+Paste the following in `src/index.ts`
+
+```
+import express from "express";
+
+const app = express();
+const PORT = 3001;
+
+app.get("/", (req, res) => {
+  res.send("Backend server is running");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+```
+
+First, we load in the Express library with `import express from "express";` which will give us functions to help build a web server and define routes. We'll create an instance of a server object with `const app = express()`.
+
+Now we'll add our first route.
+
+We use routes when designing how the frontend and backend communicate to each other. Earlier, the frontend managed all the data locally in the browser. With a backend, the browser is no longer the only place data/logic can live. Our browser (the frontend React app) communicates to our backend by sending messages to it (requests) and receiving messages from it (responses). Routes allow us to define how the backend responds to different requests.
+
+The following are common types of messages our frontend will send to the backend:
+
+- **GET**: used to retrieve data from the server
+- **POST**: used to send data to the server
+- **PUT**: used to update a piece of data (like updating a users phone number)
+- **DELETE**: used to delete data from the server
+
+Our first route definition uses `app.get`. The code inside this block is essentially saying "when this backend server gets a GET request at the url ending in `/`, run the following".
+
+The function takes in two parameters `req` (request) and `res` (response). `req` is an object containing information about the incoming request, like query parameters, headers, or data sent from the frontend. `res` is an object containing functions we can use to send something back to the browser. We can call the browser our "client" and the backend our "server".
+
+`res.send()` is one of those functions which we use to send data back to teh client. In this case, we're sending the message "Backend server is running".
+
+Lastly, we start the server with this chunk of code:
+
+```
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+```
+
+`app.listen` starts the server which allows it to begin listening for incoming requests.
+
+PORT is similar to a port in real life. Your computer can run multiple programs at the same time if each is using a different port. Since we're using `PORT = 3001`, our backend will be accessible at the URL `http://localhost:3001`.
+
+1. Start the server with the terminal command `npm run dev`
+2. Open a browser and go to `http://localhost:3001`
+
+You should see "Backend server is running".
+
+### Setting up the database (PostgreSQL)
+
+Now that the backend server is running, we need a place to store data permanently. For that we will use PostgreSQL.
+
+PostgreSQL is a relational database system. It stores data in tables made up of rows and columns. You can think of it like a structured spreadsheet, except it is designed to handle large amounts of data and multiple applications interacting with it at the same time.
+
+When you install PostgreSQL on your machine, it runs a database server locally. That server can manage multiple databases. During development we will use the local server on our machine. Later, when deploying an application, the database is usually hosted on a remote service such as Supabase, AWS RDS, or Neon.
+
+1. Check that PostgreSQL is installed with `psql --version` (if nothing prints, PostgreSQL is not installed and you will need to install it before continuing. Instructions can be found on the web)
+2. Connect to PostgreSQL using `psql -U postgres` (this opens an interactive terminal called `psql` which lets us run SQL commands against the database server).
+3. Create the database for our project with `CREATE DATABASE tasks_db;`
+4. Set a username and password that our backend server will use when connecting to the database with `CREATE USER tasks_user WITH PASSWORD 'mypassword';` (creating a new user-named similarly to the database name-for each application you create is good practice).
+5. Grant that user access to the database with `GRANT ALL PRIVILEGES ON DATABASE tasks_db TO tasks_user;`
+6. Exit the `psql` terminal interface with `\q`
+
+Now that the database exists, we need to connect our backend server to it. The backend will be responsible for sending queries to PostgreSQL.
+
+#### Why do we need a backend if the database is storing the data
+
+At this point, you may ask "if the database stores the data, why doesn’t the React frontend just query the database directly?""
+
+There are several reasons why modern web applications use a backend server between the frontend and the database.
+
+- Security
+A database requires credentials (username and password). If the frontend connected directly, those credentials would have to live in the browser code, which anyone could inspect. A backend keeps those credentials private on the server.
+
+- Abstraction
+The frontend should not care how data is stored. Today you might use PostgreSQL. Later you might move to MongoDB, Redis, or a different schema. If the frontend talks only to the backend API, the backend can change without breaking the frontend.
+
+- Historical Architecture
+Early web apps often mixed database queries directly into page code. This led to widespread vulnerabilities such as SQL injection, where attackers could manipulate queries and access or destroy data. Modern architectures separate the frontend, backend, and database specifically to prevent those problems.
+
+This pattern — frontend → backend → database — became the standard architecture for web applications because it separates concerns:
+
+- frontend handles user interaction
+- backend handles logic and APIs
+- database handles storage
+
+-
+
+Right now, the main code in our backend is `index.ts`. As the project grows, we don't want everything to live in this file.
+
+Even in small application, it's good practice to separate responsibilities into a few focused files. This keeps code easier to understand and mirrors how production backend projects are structured.
+
+We'll add two more files in `src/`, so our folder should look like:
+
+```
+backend
+├── src
+│   ├── index.ts
+│   ├── app.ts
+│   └── db.ts
+```
+
+In `app.ts`:
+
+```
+import express from "express";
+
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Backend server is running");
+});
+
+export default app;
+```
+
+In `db.ts`:
+
+```
+import { Pool } from "pg";
+
+const pool = new Pool({
+  host: "localhost",
+  port: 5432,
+  database: "tasks_db",
+  user: "tasks_user",
+  password: "mypassword"
+});
+
+export default pool;
+```
+
+We've imported `Pool` from the `pg` library. A Pool manages connections to the database. We define the database connection credentials with:
+
+```
+const pool = new Pool({
+  host: "localhost",
+  port: 5432,
+  database: "tasks_db",
+  user: "tasks_user",
+  password: "mypassword"
+});
+```
+
+These values match the database and user we created earlier in `psql`.
+- `host` is the machine running the database server ("localhost" just means "this computer")
+- `port` is the PostgreSQL default port
+- `database` is the database we created
+- `user` and `password` are the credentials the backend uses to make sure the right user is accessing the database
+
+Change `index.ts` to the following:
+
+```
+import app from "./app";
+import pool from "./db";
+
+const PORT = 3001;
+
+async function startServer() {
+  try {
+    await pool.query("SELECT 1");
+    console.log("Connected to PostgreSQL");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to connect to database:", error);
+  }
+}
+
+startServer();
+```
+
+`index.ts` acts as the entry point that wires the other files together. First, we import the server object (`app`) and the database connection (`db`) with `import app from "./app";` and `import pool from "./db";`.
+
+We write a function `startServer()` using `async`. We use `async` to manage operations that take an unpredictable amount of time without interfering with the main program thread and freezing the application's user interface.
+
+`await pool.query("SELECT 1");` tests that we have connected to the database successfully by running the sql command "SELECT 1". After confirming the connection, we start the server with `app.listen(PORT)`. We wrap this code in a `try/catch` statement, so that if it fails, we return the error and the program doesn't crash. Finally, we call the `startServer()` function.
