@@ -367,6 +367,8 @@ When you install PostgreSQL on your machine, it runs a database server locally. 
 
 Now that the database exists, we need to connect our backend server to it. The backend will be responsible for sending queries to PostgreSQL.
 
+---
+
 #### Why do we need a backend if the database is storing the data
 
 At this point, you may ask "if the database stores the data, why doesn’t the React frontend just query the database directly?""
