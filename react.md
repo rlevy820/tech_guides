@@ -381,7 +381,7 @@ Now that the database exists, we need to connect our backend server to it. The b
 
 ---
 
-***Why do we need a backend if the database is storing the data***
+***do we need a backend if the database is storing the data***
 
 At this point, you may ask "if the database stores the data, why doesn’t the React frontend just query the database directly?""
 
@@ -503,7 +503,6 @@ A PostgreSQL database can contain many tables. Each table stores a specific type
 You could open `psql` and manually run a `CREATE TABLE` command. That works for quick experiments, but it creates problems for real projects.
 
 If someone else clones the project, they would need to know to run that same command for it work.
----
 
 In `db.ts`, add the following function:
 
