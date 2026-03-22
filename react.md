@@ -618,3 +618,6 @@ Some other HTTP status codes are:
 - 200: success (the request worked as planned)
 - 404: not found (the connection was successful but what you're looking for does not exist)
 - 500: internal service error (something went wrong on the server)
+
+
+#### Adding a new task to the database
